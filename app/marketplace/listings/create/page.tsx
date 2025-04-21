@@ -4,7 +4,42 @@ import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/app/providers';
-import toast from 'react-hot-toast';
+// Use a dynamic import for toast to avoid build errors
+// import toast from 'react-hot-toast';
+
+// Define a simple toast function that will be replaced with the actual implementation
+const toast = {
+  success: (message: string) => {
+    console.log('Success:', message);
+    // In browser, this will be replaced with the actual toast
+    if (typeof window !== 'undefined') {
+      // Try to use the actual toast library if available
+      import('react-hot-toast')
+        .then((module) => {
+          module.default.success(message);
+        })
+        .catch(() => {
+          // Fallback if the module is not available
+          alert('Success: ' + message);
+        });
+    }
+  },
+  error: (message: string) => {
+    console.error('Error:', message);
+    // In browser, this will be replaced with the actual toast
+    if (typeof window !== 'undefined') {
+      // Try to use the actual toast library if available
+      import('react-hot-toast')
+        .then((module) => {
+          module.default.error(message);
+        })
+        .catch(() => {
+          // Fallback if the module is not available
+          alert('Error: ' + message);
+        });
+    }
+  }
+};
 
 type Category = {
   id: string;
