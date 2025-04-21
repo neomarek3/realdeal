@@ -1,59 +1,51 @@
-import NextAuth from "next-auth";
-import CredentialsProvider from "next-auth/providers/credentials";
-import { PrismaAdapter } from "@auth/prisma-adapter";
-import { PrismaClient } from "@prisma/client";
-import bcrypt from "bcrypt";
+import { NextResponse } from 'next/server';
+import prisma from '@/lib/db/prisma';
+import bcrypt from 'bcrypt';
 
-const prisma = new PrismaClient();
+// A simple in-memory store for valid credentials (in a real app, this would use a database)
+const validCredentials = [
+  { email: 'user@example.com', password: 'password123', name: 'Test User' }
+];
 
-const handler = NextAuth({
-  adapter: PrismaAdapter(prisma),
-  providers: [
-    CredentialsProvider({
-      name: "Credentials",
-      credentials: {
-        email: { label: "Email", type: "email" },
-        password: { label: "Password", type: "password" }
-      },
-      async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) {
-          return null;
-        }
-
-        const user = await prisma.user.findUnique({
-          where: {
-            email: credentials.email
-          }
-        });
-
-        if (!user) {
-          return null;
-        }
-
-        const passwordMatch = await bcrypt.compare(
-          credentials.password,
-          user.password
+export async function POST(request: Request) {
+  try {
+    const body = await request.json();
+    
+    if (body.email && body.password) {
+      // Find user in database
+      const user = await prisma.user.findUnique({
+        where: { email: body.email }
+      });
+      
+      if (user && await bcrypt.compare(body.password, user.password)) {
+        // Successful authentication
+        const { password, ...userWithoutPassword } = user;
+        
+        return NextResponse.json(
+          { 
+            user: userWithoutPassword,
+            authenticated: true
+          },
+          { status: 200 }
         );
-
-        if (!passwordMatch) {
-          return null;
-        }
-
-        return {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          isVerified: user.isVerified
-        };
       }
-    })
-  ],
-  session: {
-    strategy: "jwt"
-  },
-  pages: {
-    signIn: "/login"
+    }
+    
+    return NextResponse.json(
+      { 
+        error: 'Invalid credentials',
+        authenticated: false
+      },
+      { status: 401 }
+    );
+  } catch (error) {
+    console.error('Authentication error:', error);
+    return NextResponse.json(
+      { 
+        error: 'Internal server error',
+        authenticated: false
+      },
+      { status: 500 }
+    );
   }
-});
-
-export { handler as GET, handler as POST }; 
+} 

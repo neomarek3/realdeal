@@ -1,12 +1,13 @@
 "use client";
 
 import { useState } from 'react';
-import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { useAuth } from '@/app/providers';
 
 export default function LoginPage() {
   const router = useRouter();
+  const { login } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -18,15 +19,29 @@ export default function LoginPage() {
     setError('');
 
     try {
-      const result = await signIn('credentials', {
-        redirect: false,
-        email,
-        password,
+      // Call the NextAuth API
+      const response = await fetch('/api/auth/nextauth', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ email, password })
       });
 
-      if (result?.error) {
+      const data = await response.json();
+
+      if (!response.ok || !data.authenticated) {
         setError('Invalid email or password');
+        
+        // Show credentials to use if login fails
+        if (email !== 'user@example.com' || password !== 'password123') {
+          setError('Please use: email: user@example.com, password: password123');
+        }
       } else {
+        // Use the authentication context to login
+        login(data.user);
+        
+        // Successful login - redirect to dashboard
         router.push('/dashboard');
       }
     } catch (error) {
@@ -95,7 +110,7 @@ export default function LoginPage() {
         <div className="text-center mt-4">
           <p className="text-sm text-gray-600">
             Don&apos;t have an account?{' '}
-            <Link href="/register" className="font-medium text-blue-600 hover:text-blue-500">
+            <Link href="/auth/register" className="font-medium text-blue-600 hover:text-blue-500">
               Sign up
             </Link>
           </p>

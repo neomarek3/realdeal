@@ -1,4 +1,3 @@
-// prisma/schema.prisma
 generator client {
   provider = "prisma-client-js"
 }
@@ -8,83 +7,95 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// User model
 model User {
-  id                String     @id @default(cuid())
-  email             String     @unique
+  id                String    @id @default(cuid())
+  email             String    @unique
   name              String?
   password          String
   phone             String?
-  isVerified        Boolean    @default(false)
-  verificationLevel String     @default("NONE") // NONE, BASIC, FULL
-  createdAt         DateTime   @default(now())
-  updatedAt         DateTime   @updatedAt
+  isVerified        Boolean   @default(false)
+  verificationLevel String    @default("NONE")
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
   listings          Listing[]
   messages          Message[]
   reports           Report[]
   reviews           Review[]
+  buyerChats        Chat[]    @relation("BuyerChats")
+  sellerChats       Chat[]    @relation("SellerChats")
 }
 
-// Listing model
 model Listing {
-  id          String       @id @default(cuid())
+  id          String   @id @default(cuid())
   title       String
   description String
   price       Float
   images      String[]
-  category    Category     @relation(fields: [categoryId], references: [id])
   categoryId  String
-  condition   String       // NEW, LIKE_NEW, GOOD, FAIR, POOR
+  condition   String
   location    String
-  isActive    Boolean      @default(true)
-  isSold      Boolean      @default(false)
-  seller      User         @relation(fields: [sellerId], references: [id])
+  isActive    Boolean  @default(true)
+  isSold      Boolean  @default(false)
   sellerId    String
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  category    Category @relation(fields: [categoryId], references: [id])
+  seller      User     @relation(fields: [sellerId], references: [id])
   reports     Report[]
   reviews     Review[]
+  chats       Chat[]
 }
 
-// Category model
 model Category {
   id       String    @id @default(cuid())
   name     String
   listings Listing[]
 }
 
-// Message model
 model Message {
   id        String   @id @default(cuid())
   content   String
-  sender    User     @relation(fields: [senderId], references: [id])
   senderId  String
   chatId    String
+  isRead    Boolean  @default(false)
   createdAt DateTime @default(now())
+  sender    User     @relation(fields: [senderId], references: [id])
+  chat      Chat     @relation(fields: [chatId], references: [id])
 }
 
-// Report model
 model Report {
   id          String   @id @default(cuid())
   reason      String
   description String?
-  reporter    User     @relation(fields: [reporterId], references: [id])
   reporterId  String
-  listing     Listing  @relation(fields: [listingId], references: [id])
   listingId   String
-  status      String   @default("PENDING") // PENDING, REVIEWED, CLOSED
+  status      String   @default("PENDING")
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+  listing     Listing  @relation(fields: [listingId], references: [id])
+  reporter    User     @relation(fields: [reporterId], references: [id])
 }
 
-// Review model
 model Review {
-  id        String   @id @default(cuid())
-  rating    Int
-  comment   String?
-  reviewer  User     @relation(fields: [reviewerId], references: [id])
+  id         String   @id @default(cuid())
+  rating     Int
+  comment    String?
   reviewerId String
-  listing   Listing  @relation(fields: [listingId], references: [id])
+  listingId  String
+  createdAt  DateTime @default(now())
+  listing    Listing  @relation(fields: [listingId], references: [id])
+  reviewer   User     @relation(fields: [reviewerId], references: [id])
+}
+
+model Chat {
+  id        String    @id @default(cuid())
   listingId String
-  createdAt DateTime @default(now())
+  buyerId   String
+  sellerId  String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  listing   Listing   @relation(fields: [listingId], references: [id])
+  buyer     User      @relation("BuyerChats", fields: [buyerId], references: [id])
+  seller    User      @relation("SellerChats", fields: [sellerId], references: [id])
+  messages  Message[]
 }

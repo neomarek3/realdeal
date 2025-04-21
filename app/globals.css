@@ -1,8 +1,22 @@
-@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Import Courier Prime typewriter font */
+@import url('https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&display=swap');
+
+@import url('https://fonts.googleapis.com/css2?family=Special+Elite&display=swap');
 
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  --font-typewriter: 'Courier Prime', monospace;
+  --foreground-rgb: 0, 0, 0;
+  --background-start-rgb: 214, 219, 220;
+  --background-end-rgb: 255, 255, 255;
+  --primary: #1DCD9F;
+  --primary-dark: #169976;
+  --accent-rgb: 29, 205, 159; /* #1DCD9F in RGB */
 }
 
 @theme inline {
@@ -12,15 +26,275 @@
   --font-mono: var(--font-geist-mono);
 }
 
+.dark {
+  --background: #000000;
+  --foreground: #ffffff;
+  --foreground-rgb: 255, 255, 255;
+  --background-start-rgb: 0, 0, 0;
+  --background-end-rgb: 34, 34, 34;
+}
+
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: #000000;
+    --foreground: #ffffff;
+    --foreground-rgb: 255, 255, 255;
+    --background-start-rgb: 0, 0, 0;
+    --background-end-rgb: 34, 34, 34;
   }
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  color: rgb(var(--foreground-rgb));
+  background: linear-gradient(
+    to bottom,
+    rgb(var(--background-start-rgb)),
+    rgb(var(--background-end-rgb))
+  );
+  font-family: 'Courier Prime', monospace;
+}
+
+.font-typewriter {
+  font-family: 'Courier Prime', monospace;
+}
+
+.listing-card {
+  @apply bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden transition-all duration-300 hover:shadow-lg border border-gray-100 dark:border-gray-700 flex flex-col;
+}
+
+.listing-card:hover {
+  @apply transform -translate-y-1;
+}
+
+.price-tag {
+  @apply font-bold text-lg bg-teal-50 dark:bg-teal-900/30 text-teal-700 dark:text-teal-400 px-2 py-0.5 rounded-md;
+}
+
+.listing-category {
+  @apply bg-gray-800 dark:bg-black bg-opacity-60 text-white text-xs px-2 py-1 rounded-md font-medium;
+}
+
+/* Button Styles */
+.btn-primary {
+  @apply bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 dark:bg-teal-700 dark:hover:bg-teal-600 transition-colors;
+}
+
+.btn-secondary {
+  @apply bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-200 px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors;
+}
+
+/* Form Styles */
+.form-input {
+  @apply w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-teal-500 dark:focus:ring-teal-400 focus:border-teal-500 dark:focus:border-teal-400 bg-white dark:bg-gray-900 text-gray-900 dark:text-white;
+}
+
+.form-label {
+  @apply block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 font-typewriter;
+}
+
+/* Loading Spinner */
+.spinner {
+  @apply animate-spin rounded-full border-t-4 border-b-4 border-teal-500 dark:border-teal-400;
+}
+
+/* Carousel specific styles */
+.scrollbar-thin {
+  scrollbar-width: thin;
+}
+
+.scrollbar-thumb-gray-300::-webkit-scrollbar {
+  height: 6px;
+  width: 6px;
+}
+
+.scrollbar-thumb-gray-300::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+.dark .scrollbar-thumb-gray-300::-webkit-scrollbar-track {
+  background: #222222;
+}
+
+.scrollbar-thumb-gray-300::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius: 3px;
+}
+
+.dark .scrollbar-thumb-gray-300::-webkit-scrollbar-thumb {
+  background: #444;
+}
+
+.scrollbar-thumb-gray-300::-webkit-scrollbar-thumb:hover {
+  background: #aaa;
+}
+
+.dark .scrollbar-thumb-gray-300::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+/* Enhance carousel animations */
+
+/* Image carousel animation - Replace slideIn with better animations */
+.carousel-slide-in {
+  animation: fadeIn 0.4s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Add left/right slide animations */
+.slide-in-left {
+  animation: slideInLeft 0.4s ease-out;
+}
+
+.slide-in-right {
+  animation: slideInRight 0.4s ease-out;
+}
+
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-2%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(2%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Image container styles for smooth transitions */
+.carousel-image-wrapper {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.3s ease-out;
+}
+
+.carousel-image-active {
+  opacity: 1;
+  z-index: 5;
+}
+
+/* Image thumbnails hover effects - change animation direction */
+.thumbnail-hover {
+  transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.thumbnail-hover:hover {
+  transform: translateY(-4px) scale(1.05);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  z-index: 1;
+}
+
+/* Carousel navigation buttons - change animation */
+.carousel-nav-button {
+  opacity: 0.7;
+  transition: opacity 0.2s ease-out, background-color 0.2s ease-out;
+}
+
+.carousel-nav-button:hover {
+  opacity: 1;
+  background-color: white !important;
+}
+
+.dark .carousel-nav-button:hover {
+  background-color: #222 !important;
+}
+
+/* Fullscreen image style */
+.carousel-image-container {
+  height: 100%;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  position: relative;
+}
+
+.carousel-image {
+  object-fit: contain;
+  max-height: 100%;
+  max-width: 100%;
+  height: auto;
+  width: auto;
+  position: relative;
+  z-index: 1;
+}
+
+/* Active thumbnail styles */
+.thumbnail-active {
+  border-color: #1DCD9F !important;
+  box-shadow: 0 0 0 2px rgba(29, 205, 159, 0.3);
+  transform: scale(1.05);
+}
+
+/* Listing card styles */
+.listing-card {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  border-radius: 8px;
+  overflow: hidden;
+  background-color: white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.dark .listing-card {
+  background-color: #222;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.listing-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+}
+
+.dark .listing-card:hover {
+  box-shadow: 0 10px 15px rgba(0, 0, 0, 0.3);
+}
+
+.listing-category {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  background-color: rgba(29, 205, 159, 0.9);
+  color: white;
+}
+
+.price-tag {
+  font-weight: bold;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.375rem;
+  background-color: rgba(29, 205, 159, 0.1);
+  color: #169976;
+}
+
+.dark .price-tag {
+  background-color: rgba(29, 205, 159, 0.2);
+  color: #1DCD9F;
 }

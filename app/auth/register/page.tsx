@@ -3,9 +3,11 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { useAuth } from '@/app/providers';
 
 export default function RegisterPage() {
   const router = useRouter();
+  const { login } = useAuth();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -58,8 +60,14 @@ export default function RegisterPage() {
         throw new Error(data.message || 'Something went wrong');
       }
 
-      // Redirect to login page after successful registration
-      router.push('/login?registered=true');
+      // If auto-login on registration is desired, we can login the user here
+      if (data.user) {
+        login(data.user);
+        router.push('/dashboard');
+      } else {
+        // Otherwise redirect to login page after successful registration
+        router.push('/auth/login?registered=true');
+      }
     } catch (error) {
       if (error instanceof Error) {
         setError(error.message);
@@ -160,7 +168,7 @@ export default function RegisterPage() {
         <div className="text-center mt-4">
           <p className="text-sm text-gray-600">
             Already have an account?{' '}
-            <Link href="/login" className="font-medium text-blue-600 hover:text-blue-500">
+            <Link href="/auth/login" className="font-medium text-blue-600 hover:text-blue-500">
               Sign in
             </Link>
           </p>
