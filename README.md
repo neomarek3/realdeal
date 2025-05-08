@@ -61,6 +61,41 @@ npm run dev
 yarn dev
 ```
 
+## Deployment to Cloudflare Pages
+
+### Prerequisites
+
+- Cloudflare account
+- Wrangler CLI installed (`npm install -g wrangler`)
+
+### Deployment Steps
+
+1. Build the application for Cloudflare Pages
+```bash
+npm run pages:build
+```
+
+2. Set up environment variables in Cloudflare Pages dashboard
+   - Go to your Cloudflare Pages project
+   - Navigate to Settings > Environment variables
+   - Add all required environment variables (DATABASE_URL, NEXTAUTH_SECRET, etc.)
+
+3. Deploy to Cloudflare Pages
+```bash
+npm run pages:deploy
+```
+
+4. Alternatively, connect your GitHub repository to Cloudflare Pages for automatic deployments
+
+### Troubleshooting Cloudflare Deployment
+
+If you encounter errors during deployment:
+
+1. Ensure your database is accessible from Cloudflare's network
+2. Verify all environment variables are correctly set in Cloudflare Pages dashboard
+3. Check that your Next.js configuration has `output: 'standalone'` and `images.unoptimized: true`
+4. For database connection issues, consider using Prisma Data Proxy or a database with external connectivity
+
 ## License
 
 This project is licensed under the MIT License

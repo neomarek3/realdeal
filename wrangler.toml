@@ -1,0 +1,15 @@
+name = "realdeal"
+main = "_worker.js"
+compatibility_date = "2023-06-28"
+
+[build]
+command = "npm run build"
+[build.upload]
+format = "service-worker"
+
+[site]
+bucket = ".next/standalone"
+entry-point = "_worker.js"
+
+[env.production]
+workers_dev = true 
