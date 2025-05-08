@@ -1,10 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import prisma from '../../../../lib/db/prisma';
 
 // Helper to check admin status
 async function isAdmin(req: NextRequest) {
-  // For now, we'll use a simplified check since NextAuth is not fully set up
-  // In a production app, you would use getServerSession from next-auth
+  // For now, we'll use a simplified check
   const adminEmail = 'neosiphonese@gmail.com';
   
   // Get the session from a cookie or header
@@ -14,6 +12,44 @@ async function isAdmin(req: NextRequest) {
   
   return userEmail === adminEmail;
 }
+
+// Mock data for listings
+const mockListings = [
+  {
+    id: 'listing1',
+    title: 'iPhone 13 Pro',
+    description: 'Like new iPhone 13 Pro',
+    price: 699,
+    images: ['https://example.com/iphone.jpg'],
+    categoryId: 'cat1',
+    category: { id: 'cat1', name: 'Electronics' },
+    condition: 'Like New',
+    location: 'Zagreb',
+    isActive: true,
+    isSold: false,
+    sellerId: 'user1',
+    seller: { id: 'user1', name: 'John Doe', email: 'john@example.com' },
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    id: 'listing2',
+    title: 'MacBook Pro 16"',
+    description: 'MacBook Pro with M1 Pro chip',
+    price: 1899,
+    images: ['https://example.com/macbook.jpg'],
+    categoryId: 'cat1',
+    category: { id: 'cat1', name: 'Electronics' },
+    condition: 'Excellent',
+    location: 'Split',
+    isActive: true,
+    isSold: false,
+    sellerId: 'user1',
+    seller: { id: 'user1', name: 'John Doe', email: 'john@example.com' },
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+];
 
 export async function GET(req: NextRequest) {
   try {
@@ -28,19 +64,7 @@ export async function GET(req: NextRequest) {
 
     // If ID is provided, get single listing
     if (id) {
-      const listing = await prisma.listing.findUnique({
-        where: { id },
-        include: {
-          category: true,
-          seller: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-            },
-          },
-        },
-      });
+      const listing = mockListings.find(listing => listing.id === id);
 
       if (!listing) {
         return NextResponse.json({ error: 'Listing not found' }, { status: 404 });
@@ -50,23 +74,7 @@ export async function GET(req: NextRequest) {
     }
 
     // Get all listings
-    const listings = await prisma.listing.findMany({
-      include: {
-        category: true,
-        seller: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-          },
-        },
-      },
-      orderBy: {
-        createdAt: 'desc',
-      },
-    });
-
-    return NextResponse.json(listings);
+    return NextResponse.json(mockListings);
   } catch (error) {
     console.error('Admin API error:', error);
     return NextResponse.json(
@@ -94,11 +102,8 @@ export async function DELETE(req: NextRequest) {
       );
     }
 
-    // Delete the listing
-    await prisma.listing.delete({
-      where: { id },
-    });
-
+    // In a real app, this would delete from the database
+    // Here we just return success
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Admin API error:', error);
@@ -109,7 +114,7 @@ export async function DELETE(req: NextRequest) {
   }
 }
 
-export async function PATCH(req: NextRequest) {
+export async function PUT(req: NextRequest) {
   try {
     // Check if user is admin
     const admin = await isAdmin(req);
@@ -129,14 +134,13 @@ export async function PATCH(req: NextRequest) {
 
     const data = await req.json();
 
-    // Update the listing
-    const updatedListing = await prisma.listing.update({
-      where: { id },
-      data,
-      include: {
-        category: true,
-      },
-    });
+    // In a real app, this would update the database
+    // Here we just return the data
+    const updatedListing = {
+      ...mockListings.find(listing => listing.id === id),
+      ...data,
+      updatedAt: new Date().toISOString(),
+    };
 
     return NextResponse.json(updatedListing);
   } catch (error) {

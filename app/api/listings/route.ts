@@ -1,26 +1,62 @@
 import { NextRequest, NextResponse } from 'next/server';
-import prisma from '@/lib/db/prisma';
+
+// Mock data for listings
+const mockListings = [
+  {
+    id: 'placeholder-1',
+    title: 'Vintage Typewriter',
+    description: 'Beautiful vintage typewriter in working condition, perfect for collectors or decoration.',
+    price: 120,
+    images: ['/images/placeholder-image.svg'],
+    category: { id: 'cat-1', name: 'Collectibles' },
+    condition: 'Good',
+    location: 'Zagreb',
+    isActive: true,
+    isSold: false,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    sellerId: 'demo-user',
+    seller: { id: 'demo-user', name: 'Demo User', email: 'demo@example.com', isVerified: true }
+  },
+  {
+    id: 'placeholder-2',
+    title: 'Mountain Bike',
+    description: 'High-quality mountain bike with front suspension, perfect for trails and city rides.',
+    price: 350,
+    images: ['/images/placeholder-image.svg'],
+    category: { id: 'cat-2', name: 'Sports & Leisure' },
+    condition: 'Like New',
+    location: 'Split',
+    isActive: true,
+    isSold: false,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    sellerId: 'demo-user',
+    seller: { id: 'demo-user', name: 'Demo User', email: 'demo@example.com', isVerified: true }
+  },
+  {
+    id: 'placeholder-3',
+    title: 'MacBook Pro 2021',
+    description: 'Apple MacBook Pro with M1 chip, 16GB RAM and 512GB SSD. Perfect condition.',
+    price: 1500,
+    images: ['/images/placeholder-image.svg'],
+    category: { id: 'cat-3', name: 'Electronics' },
+    condition: 'Like New',
+    location: 'Rijeka',
+    isActive: true,
+    isSold: false,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    sellerId: 'demo-user',
+    seller: { id: 'demo-user', name: 'Demo User', email: 'demo@example.com', isVerified: true }
+  }
+];
 
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
-    const query = {
-      where: {} as any,
-      orderBy: { createdAt: 'desc' } as any,
-      include: {
-        category: true,
-        seller: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            isVerified: true,
-          },
-        },
-      },
-    };
-
-    // Apply filters if they exist in the request
+    
+    // Get filters from query params
     const category = searchParams.get('category');
     const minPrice = searchParams.get('minPrice');
     const maxPrice = searchParams.get('maxPrice');
@@ -29,48 +65,9 @@ export async function GET(request: NextRequest) {
     const id = searchParams.get('id');
     const limit = searchParams.get('limit');
 
-    // Build the where clause
+    // If looking for a specific listing by ID
     if (id) {
-      query.where.id = id;
-    }
-
-    if (category) {
-      query.where.category = {
-        name: category,
-      };
-    }
-
-    if (minPrice) {
-      query.where.price = {
-        ...query.where.price,
-        gte: parseFloat(minPrice),
-      };
-    }
-
-    if (maxPrice) {
-      query.where.price = {
-        ...query.where.price,
-        lte: parseFloat(maxPrice),
-      };
-    }
-
-    if (condition) {
-      query.where.condition = condition;
-    }
-
-    if (sellerId) {
-      query.where.sellerId = sellerId;
-    }
-
-    // Execute query
-    let listings = [];
-    
-    if (id) {
-      // If searching for a specific listing
-      const listing = await prisma.listing.findUnique({
-        where: { id },
-        include: query.include,
-      });
+      const listing = mockListings.find(item => item.id === id);
       
       if (!listing) {
         return NextResponse.json(
@@ -80,82 +77,47 @@ export async function GET(request: NextRequest) {
       }
       
       return NextResponse.json(listing);
-    } else {
-      // Getting all listings with filters
-      listings = await prisma.listing.findMany(query);
-      
-      // Apply limit if specified
-      if (limit) {
-        listings = listings.slice(0, parseInt(limit));
-      }
-      
-      // If no listings were found, generate placeholder data
-      if (listings.length === 0) {
-        // Trigger the dummy data API to seed some listings
-        const seedResponse = await fetch(`${request.nextUrl.origin}/api/dummy-data`);
-        if (seedResponse.ok) {
-          // Try to fetch listings again
-          listings = await prisma.listing.findMany(query);
-        }
-        
-        // If still no listings, return empty array
-        if (listings.length === 0) {
-          // Create placeholder listings with hardcoded data
-          listings = [
-            {
-              id: 'placeholder-1',
-              title: 'Vintage Typewriter',
-              description: 'Beautiful vintage typewriter in working condition, perfect for collectors or decoration.',
-              price: 120,
-              images: ['/images/placeholder-image.svg'],
-              category: { id: 'cat-1', name: 'Collectibles' },
-              condition: 'Good',
-              location: 'Zagreb',
-              isActive: true,
-              isSold: false,
-              createdAt: new Date(),
-              updatedAt: new Date(),
-              sellerId: 'demo-user',
-              seller: { id: 'demo-user', name: 'Demo User', email: 'demo@example.com', isVerified: true }
-            },
-            {
-              id: 'placeholder-2',
-              title: 'Mountain Bike',
-              description: 'High-quality mountain bike with front suspension, perfect for trails and city rides.',
-              price: 350,
-              images: ['/images/placeholder-image.svg'],
-              category: { id: 'cat-2', name: 'Sports & Leisure' },
-              condition: 'Like New',
-              location: 'Split',
-              isActive: true,
-              isSold: false,
-              createdAt: new Date(),
-              updatedAt: new Date(),
-              sellerId: 'demo-user',
-              seller: { id: 'demo-user', name: 'Demo User', email: 'demo@example.com', isVerified: true }
-            },
-            {
-              id: 'placeholder-3',
-              title: 'MacBook Pro 2021',
-              description: 'Apple MacBook Pro with M1 chip, 16GB RAM and 512GB SSD. Perfect condition.',
-              price: 1500,
-              images: ['/images/placeholder-image.svg'],
-              category: { id: 'cat-3', name: 'Electronics' },
-              condition: 'Like New',
-              location: 'Rijeka',
-              isActive: true,
-              isSold: false,
-              createdAt: new Date(),
-              updatedAt: new Date(),
-              sellerId: 'demo-user',
-              seller: { id: 'demo-user', name: 'Demo User', email: 'demo@example.com', isVerified: true }
-            }
-          ];
-        }
-      }
-      
-      return NextResponse.json(listings);
     }
+    
+    // Filter listings based on query parameters
+    let filteredListings = [...mockListings];
+    
+    if (category) {
+      filteredListings = filteredListings.filter(
+        listing => listing.category.name.toLowerCase() === category.toLowerCase()
+      );
+    }
+    
+    if (minPrice) {
+      filteredListings = filteredListings.filter(
+        listing => listing.price >= parseFloat(minPrice)
+      );
+    }
+    
+    if (maxPrice) {
+      filteredListings = filteredListings.filter(
+        listing => listing.price <= parseFloat(maxPrice)
+      );
+    }
+    
+    if (condition) {
+      filteredListings = filteredListings.filter(
+        listing => listing.condition.toLowerCase() === condition.toLowerCase()
+      );
+    }
+    
+    if (sellerId) {
+      filteredListings = filteredListings.filter(
+        listing => listing.sellerId === sellerId
+      );
+    }
+    
+    // Apply limit if specified
+    if (limit) {
+      filteredListings = filteredListings.slice(0, parseInt(limit));
+    }
+    
+    return NextResponse.json(filteredListings);
   } catch (error) {
     console.error('Error fetching listings:', error);
     return NextResponse.json(
@@ -177,55 +139,33 @@ export async function POST(request: Request) {
       );
     }
 
-    try {
-      // Create the listing in the database
-      const listing = await prisma.listing.create({
-        data: {
-          title: body.title,
-          description: body.description,
-          price: parseFloat(body.price),
-          images: body.images || [],
-          condition: body.condition || 'Good',
-          location: body.location,
-          isActive: true,
-          isSold: false,
-          category: {
-            connect: { id: body.categoryId }
-          },
-          seller: {
-            connect: { id: body.sellerId }
-          }
-        },
-        include: {
-          category: true,
-          seller: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-              isVerified: true,
-            },
-          },
-        }
-      });
-      
-      return NextResponse.json(listing, { status: 201 });
-    } catch (error) {
-      console.error('Database error creating listing:', error);
-      
-      // If there's a database error (e.g., category not found), create a mock listing
-      const mockListing = {
-        id: `mock-${Date.now()}`,
-        ...body,
-        images: body.images || ['/images/placeholder-image.svg'],
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        isActive: true,
-        isSold: false,
-      };
-      
-      return NextResponse.json(mockListing, { status: 201 });
-    }
+    // Create a mock listing with the provided data
+    const mockListing = {
+      id: `listing-${Date.now()}`,
+      title: body.title,
+      description: body.description,
+      price: parseFloat(body.price),
+      images: body.images || ['/images/placeholder-image.svg'],
+      categoryId: body.categoryId,
+      category: { id: body.categoryId, name: 'Mock Category' },
+      condition: body.condition || 'Good',
+      location: body.location || 'Unknown',
+      isActive: true,
+      isSold: false,
+      sellerId: body.sellerId || 'anonymous',
+      seller: { 
+        id: body.sellerId || 'anonymous', 
+        name: 'Mock User', 
+        email: 'mock@example.com', 
+        isVerified: true 
+      },
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+    
+    // In a real app, we would save this to the database
+    // For now, just return the mock listing
+    return NextResponse.json(mockListing, { status: 201 });
   } catch (error) {
     console.error('Failed to create listing:', error);
     return NextResponse.json(

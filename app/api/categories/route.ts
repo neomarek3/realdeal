@@ -1,41 +1,26 @@
 import { NextResponse } from 'next/server';
-import prisma from '@/lib/db/prisma';
 
-// Function to seed initial categories if none exist
-async function seedCategories() {
-  const count = await prisma.category.count();
-  
-  if (count === 0) {
-    const categories = [
-      { name: 'Electronics' },
-      { name: 'Clothing & Fashion' },
-      { name: 'Home & Garden' },
-      { name: 'Sports & Leisure' },
-      { name: 'Vehicles' },
-      { name: 'Real Estate' },
-      { name: 'Jobs' },
-      { name: 'Services' },
-      { name: 'Other' }
-    ];
-    
-    await prisma.category.createMany({
-      data: categories
-    });
-  }
-}
+// Mock categories data
+const mockCategories = [
+  { id: 'cat-1', name: 'Electronics' },
+  { id: 'cat-2', name: 'Clothing & Fashion' },
+  { id: 'cat-3', name: 'Home & Garden' },
+  { id: 'cat-4', name: 'Sports & Leisure' },
+  { id: 'cat-5', name: 'Vehicles' },
+  { id: 'cat-6', name: 'Real Estate' },
+  { id: 'cat-7', name: 'Jobs' },
+  { id: 'cat-8', name: 'Services' },
+  { id: 'cat-9', name: 'Other' }
+];
 
 export async function GET() {
   try {
-    // Ensure we have categories
-    await seedCategories();
+    // Return mock categories sorted by name
+    const sortedCategories = [...mockCategories].sort((a, b) => 
+      a.name.localeCompare(b.name)
+    );
     
-    const categories = await prisma.category.findMany({
-      orderBy: {
-        name: 'asc'
-      }
-    });
-    
-    return NextResponse.json(categories);
+    return NextResponse.json(sortedCategories);
   } catch (error) {
     console.error('Error fetching categories:', error);
     return NextResponse.json(

@@ -1,8 +1,42 @@
 import { NextRequest, NextResponse } from 'next/server';
-import prisma from '../../../../../lib/db/prisma';
+
+// Mock user data
+const mockUsers = [
+  {
+    id: 'user1',
+    email: 'john.doe@example.com',
+    name: 'John Doe',
+  },
+  {
+    id: 'user2',
+    email: 'jane.smith@example.com',
+    name: 'Jane Smith',
+  },
+  {
+    id: 'user3',
+    email: 'demo@example.com',
+    name: 'Demo User',
+  }
+];
+
+// Mock listings data
+const mockListings = [
+  {
+    id: 'listing1',
+    title: 'iPhone 12 Pro',
+    sellerId: 'user3',
+    isSold: false
+  },
+  {
+    id: 'listing2',
+    title: 'Wooden Desk',
+    sellerId: 'user3',
+    isSold: false
+  }
+];
 
 // Helper function to get user from authorization header
-async function getUserFromAuth(req: NextRequest) {
+function getUserFromAuth(req: NextRequest) {
   const authHeader = req.headers.get('authorization');
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     return null;
@@ -11,11 +45,7 @@ async function getUserFromAuth(req: NextRequest) {
   const email = authHeader.split(' ')[1];
   
   // Find user by email
-  const user = await prisma.user.findUnique({
-    where: { email }
-  });
-  
-  return user;
+  return mockUsers.find(user => user.email === email);
 }
 
 // PATCH - Update listing status (mark as sold)
@@ -24,7 +54,7 @@ export async function PATCH(
   { params }: { params: { id: string } }
 ) {
   try {
-    const user = await getUserFromAuth(req);
+    const user = getUserFromAuth(req);
     
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -44,16 +74,16 @@ export async function PATCH(
     }
     
     // Find the listing
-    const listing = await prisma.listing.findUnique({
-      where: { id: listingId }
-    });
+    const listingIndex = mockListings.findIndex(listing => listing.id === listingId);
     
-    if (!listing) {
+    if (listingIndex === -1) {
       return NextResponse.json(
         { error: 'Listing not found' },
         { status: 404 }
       );
     }
+    
+    const listing = mockListings[listingIndex];
     
     // Check if the user is the owner of the listing
     if (listing.sellerId !== user.id) {
@@ -64,12 +94,12 @@ export async function PATCH(
     }
     
     // Update the listing status
-    const updatedListing = await prisma.listing.update({
-      where: { id: listingId },
-      data: { isSold }
-    });
+    mockListings[listingIndex] = {
+      ...listing,
+      isSold
+    };
     
-    return NextResponse.json(updatedListing);
+    return NextResponse.json(mockListings[listingIndex]);
   } catch (error) {
     console.error('Error updating listing status:', error);
     return NextResponse.json(
