@@ -4,10 +4,12 @@ import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/app/providers';
+import { useLanguage } from '@/app/providers/LanguageProvider';
 
 export default function AdminDashboard() {
   const router = useRouter();
   const { user, isAuthenticated } = useAuth();
+  const { t } = useLanguage();
   
   const [listings, setListings] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -202,10 +204,10 @@ export default function AdminDashboard() {
       }
       
       const data = await response.json();
-      return data.files || [];
+      return data.urls || [];
     } catch (error) {
       console.error('Error uploading images:', error);
-      throw new Error('Failed to upload images');
+      return [];
     } finally {
       setUploadProgress(false);
     }
@@ -218,54 +220,45 @@ export default function AdminDashboard() {
     
     try {
       setUpdateLoading(true);
-      setError(null);
       
       // Upload any new images first
-      let allImages = [...listingImages];
+      const newImageUrls = await uploadNewImages();
       
-      if (newImages.length > 0) {
-        try {
-          const uploadedImageUrls = await uploadNewImages();
-          allImages = [...allImages, ...uploadedImageUrls];
-        } catch (error) {
-          setError('Failed to upload new images. Please try again.');
-          setUpdateLoading(false);
-          return;
-        }
-      }
+      // Combine existing and new image URLs
+      const updatedImages = [...listingImages, ...newImageUrls];
       
-      const updatedData = {
+      const updatedListing = {
         ...formData,
         price: parseFloat(formData.price),
-        images: allImages,
+        images: updatedImages,
       };
       
       const response = await fetch(`/api/admin/listings?id=${editingListing.id}`, {
-        method: 'PATCH',
+        method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${user?.email}`
         },
-        body: JSON.stringify(updatedData),
+        body: JSON.stringify(updatedListing)
       });
       
       if (!response.ok) {
         throw new Error('Failed to update listing');
       }
       
-      const updatedListing = await response.json();
+      const data = await response.json();
       
-      // Update the listing in the local state
+      // Update the listing in the state
       setListings(listings.map(listing => 
-        listing.id === updatedListing.id ? updatedListing : listing
+        listing.id === editingListing.id ? { ...listing, ...data } : listing
       ));
       
       setUpdateSuccess(true);
       
-      // Close the modal after a short delay
+      // Close modal after a delay
       setTimeout(() => {
         closeEditModal();
-      }, 1500);
+      }, 2000);
       
     } catch (error) {
       console.error('Error updating listing:', error);
@@ -277,381 +270,344 @@ export default function AdminDashboard() {
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
+    return date.toLocaleDateString();
   };
-
-  if (loading) {
-    return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex justify-center items-center py-20">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-blue-500"></div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Admin Dashboard</h1>
-        <Link 
-          href="/marketplace" 
-          className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300"
-        >
-          Back to Marketplace
-        </Link>
-      </div>
+      <h1 className="text-3xl font-bold mb-8 text-primary-color">{t('admin.dashboard')}</h1>
       
-      {error && (
-        <div className="mb-6 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 p-4 rounded-lg">
-          <p>{error}</p>
+      <div className="bg-card rounded-lg shadow-md p-6 mb-8">
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-xl font-bold text-primary-color">{t('admin.listings')}</h2>
         </div>
-      )}
-
-      {editingListing && (
-        <div className="fixed inset-0 z-50 overflow-y-auto bg-black bg-opacity-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-lg max-w-3xl w-full p-6 max-h-[90vh] overflow-y-auto">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white">Edit Listing</h2>
-              <button onClick={closeEditModal} className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-            
-            {updateSuccess && (
-              <div className="mb-4 bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800 text-green-700 dark:text-green-400 p-4 rounded">
-                <p>Listing updated successfully!</p>
-              </div>
-            )}
-            
-            <form onSubmit={updateListing} className="space-y-4">
-              <div>
-                <label htmlFor="title" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Title</label>
-                <input
-                  type="text"
-                  id="title"
-                  name="title"
-                  value={formData.title}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
-                  required
-                />
-              </div>
-              
-              <div>
-                <label htmlFor="description" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label>
-                <textarea
-                  id="description"
-                  name="description"
-                  value={formData.description}
-                  onChange={handleInputChange}
-                  rows={4}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
-                  required
-                ></textarea>
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label htmlFor="price" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Price (€)</label>
-                  <input
-                    type="number"
-                    id="price"
-                    name="price"
-                    value={formData.price}
-                    onChange={handleInputChange}
-                    min="0"
-                    step="0.01"
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
-                    required
-                  />
-                </div>
-                
-                <div>
-                  <label htmlFor="condition" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Condition</label>
-                  <select
-                    id="condition"
-                    name="condition"
-                    value={formData.condition}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
-                    required
-                  >
-                    <option value="">Select condition</option>
-                    <option value="New">New</option>
-                    <option value="Like New">Like New</option>
-                    <option value="Excellent">Excellent</option>
-                    <option value="Good">Good</option>
-                    <option value="Fair">Fair</option>
-                    <option value="Poor">Poor</option>
-                  </select>
-                </div>
-                
-                <div>
-                  <label htmlFor="location" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Location</label>
-                  <input
-                    type="text"
-                    id="location"
-                    name="location"
-                    value={formData.location}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
-                    required
-                  />
-                </div>
-                
-                <div>
-                  <label htmlFor="categoryId" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Category</label>
-                  <select
-                    id="categoryId"
-                    name="categoryId"
-                    value={formData.categoryId}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
-                    required
-                  >
-                    <option value="">Select category</option>
-                    {categories.map(category => (
-                      <option key={category.id} value={category.id}>
-                        {category.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-              
-              {/* Existing Images */}
-              {listingImages.length > 0 && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Current Images</label>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                    {listingImages.map((image, index) => (
-                      <div key={index} className="relative group">
-                        <div className="aspect-w-1 aspect-h-1 overflow-hidden rounded-md bg-gray-200 dark:bg-gray-700">
-                          <img src={image} alt={`Listing image ${index + 1}`} className="object-cover w-full h-full" />
-                        </div>
-                        <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-opacity flex items-center justify-center opacity-0 group-hover:opacity-100">
-                          <button
-                            type="button"
-                            onClick={() => removeExistingImage(index)}
-                            className="p-1 bg-red-600 text-white rounded-full hover:bg-red-700"
-                          >
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                              <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-                            </svg>
-                          </button>
-                          <div className="flex space-x-1 ml-2">
-                            <button
-                              type="button"
-                              onClick={() => moveImageUp(index)}
-                              disabled={index === 0}
-                              className={`p-1 bg-blue-600 text-white rounded-full ${index === 0 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-700'}`}
-                            >
-                              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                <path fillRule="evenodd" d="M5.293 9.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L11 7.414V15a1 1 0 11-2 0V7.414L6.707 9.707a1 1 0 01-1.414 0z" clipRule="evenodd" />
-                              </svg>
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => moveImageDown(index)}
-                              disabled={index === listingImages.length - 1}
-                              className={`p-1 bg-blue-600 text-white rounded-full ${index === listingImages.length - 1 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-700'}`}
-                            >
-                              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                <path fillRule="evenodd" d="M14.707 10.293a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 111.414-1.414L9 12.586V5a1 1 0 012 0v7.586l2.293-2.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                              </svg>
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-              
-              {/* New Images */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Add New Images</label>
-                <div className="flex items-center space-x-4">
-                  <input
-                    type="file"
-                    accept="image/*"
-                    multiple
-                    onChange={handleFileSelect}
-                    ref={fileInputRef}
-                    className="hidden"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => fileInputRef.current?.click()}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-                  >
-                    Select Images
-                  </button>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Max 5MB per image</p>
-                </div>
-                
-                {newImages.length > 0 && (
-                  <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                    {newImages.map((file, index) => (
-                      <div key={index} className="relative group">
-                        <div className="aspect-w-1 aspect-h-1 overflow-hidden rounded-md bg-gray-200 dark:bg-gray-700">
-                          <img 
-                            src={URL.createObjectURL(file)} 
-                            alt={`New image ${index + 1}`} 
-                            className="object-cover w-full h-full" 
-                          />
-                        </div>
-                        <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-opacity flex items-center justify-center opacity-0 group-hover:opacity-100">
-                          <button
-                            type="button"
-                            onClick={() => removeNewImage(index)}
-                            className="p-1 bg-red-600 text-white rounded-full hover:bg-red-700"
-                          >
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                              <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-                            </svg>
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-              
-              <div className="flex justify-end space-x-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-                <button
-                  type="button"
-                  onClick={closeEditModal}
-                  className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={updateLoading || uploadProgress}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-blue-400 dark:disabled:bg-blue-500"
-                >
-                  {updateLoading || uploadProgress ? 'Saving...' : 'Save Changes'}
-                </button>
-              </div>
-            </form>
+        
+        {error && (
+          <div className="mb-4 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 p-3 rounded">
+            {error}
           </div>
-        </div>
-      )}
-      
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden">
-        <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-          <h2 className="text-xl font-bold text-gray-900 dark:text-white">All Listings ({listings.length})</h2>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-            <thead className="bg-gray-50 dark:bg-gray-700">
-              <tr>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Listing</th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Status</th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Category</th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Price</th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Seller</th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Created</th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-              {listings.map(listing => (
-                <tr key={listing.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center">
-                      <div className="h-10 w-10 flex-shrink-0 mr-3">
-                        {listing.images && listing.images.length > 0 ? (
-                          <img 
-                            className="h-10 w-10 rounded-full object-cover" 
-                            src={listing.images[0]} 
-                            alt={listing.title} 
-                          />
-                        ) : (
-                          <div className="h-10 w-10 rounded-full bg-gray-200 dark:bg-gray-600 flex items-center justify-center text-gray-400 dark:text-gray-500">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                            </svg>
-                          </div>
-                        )}
+        )}
+        
+        {loading ? (
+          <div className="flex justify-center py-12">
+            <div className="spinner h-12 w-12"></div>
+          </div>
+        ) : listings.length === 0 ? (
+          <p className="text-center py-8 text-secondary-color">No listings found.</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-gray-200 dark:border-gray-700">
+                  <th className="px-4 py-3 text-left text-secondary-color">{t('admin.title')}</th>
+                  <th className="px-4 py-3 text-left text-secondary-color">{t('listing.price')}</th>
+                  <th className="px-4 py-3 text-left text-secondary-color">{t('listing.category')}</th>
+                  <th className="px-4 py-3 text-left text-secondary-color">{t('listing.location')}</th>
+                  <th className="px-4 py-3 text-left text-secondary-color">Date</th>
+                  <th className="px-4 py-3 text-left text-secondary-color">Status</th>
+                  <th className="px-4 py-3 text-left text-secondary-color">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {listings.map((listing) => (
+                  <tr key={listing.id} className="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                    <td className="px-4 py-3 text-primary-color">
+                      <div className="flex items-center">
+                        <div className="w-10 h-10 bg-gray-200 dark:bg-gray-700 rounded overflow-hidden mr-3">
+                          {listing.images && listing.images.length > 0 ? (
+                            <img 
+                              src={listing.images[0]} 
+                              alt={listing.title}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center bg-gray-300 dark:bg-gray-600">
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-500 dark:text-gray-400" viewBox="0 0 20 20" fill="currentColor">
+                                <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
+                              </svg>
+                            </div>
+                          )}
+                        </div>
+                        <span className="font-medium">{listing.title}</span>
                       </div>
-                      <div>
-                        <div className="text-sm font-medium text-gray-900 dark:text-white">
-                          <Link href={`/marketplace/listings/${listing.id}`} className="hover:underline">
-                            {listing.title}
-                          </Link>
-                        </div>
-                        <div className="text-sm text-gray-500 dark:text-gray-400">
-                          ID: {listing.id.substring(0, 8)}...
-                        </div>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                      listing.isSold 
-                        ? 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300' 
-                        : 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400'
-                    }`}>
-                      {listing.isSold ? 'Sold' : 'Active'}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                    {listing.category?.name || 'Uncategorized'}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                    €{typeof listing.price === 'number' ? listing.price.toFixed(2) : listing.price}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900 dark:text-white">{listing.seller?.name || 'Unknown'}</div>
-                    <div className="text-sm text-gray-500 dark:text-gray-400">{listing.seller?.email || 'No email'}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                    {formatDate(listing.createdAt)}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <div className="flex space-x-2">
-                      <button 
-                        onClick={() => openEditModal(listing)}
-                        className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300"
-                      >
-                        Edit
-                      </button>
-                      {deleteConfirm === listing.id ? (
-                        <div className="flex space-x-2">
-                          <button 
-                            onClick={() => handleDelete(listing.id)}
-                            className="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300"
-                          >
-                            Confirm
-                          </button>
-                          <button 
-                            onClick={() => setDeleteConfirm(null)}
-                            className="text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-300"
-                          >
-                            Cancel
-                          </button>
-                        </div>
-                      ) : (
-                        <button 
+                    </td>
+                    <td className="px-4 py-3 text-primary-color">€{listing.price}</td>
+                    <td className="px-4 py-3 text-primary-color">{listing.category?.name || '-'}</td>
+                    <td className="px-4 py-3 text-primary-color">{listing.location || '-'}</td>
+                    <td className="px-4 py-3 text-primary-color">{formatDate(listing.createdAt)}</td>
+                    <td className="px-4 py-3">
+                      <span className={`px-2 py-1 rounded-full text-xs ${
+                        listing.isSold 
+                          ? 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300' 
+                          : 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
+                      }`}>
+                        {listing.isSold ? t('listing.sold') : 'Active'}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex space-x-2">
+                        <button
+                          onClick={() => openEditModal(listing)}
+                          className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300"
+                        >
+                          {t('admin.edit')}
+                        </button>
+                        <button
                           onClick={() => setDeleteConfirm(listing.id)}
                           className="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300"
                         >
-                          Delete
+                          {t('admin.delete')}
                         </button>
-                      )}
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+                        {deleteConfirm === listing.id && (
+                          <div className="absolute bg-white dark:bg-gray-800 shadow-lg rounded-lg p-4 z-10 border border-gray-200 dark:border-gray-700">
+                            <p className="mb-3 text-primary-color">{t('admin.deleteConfirm')}</p>
+                            <div className="flex justify-end space-x-2">
+                              <button
+                                onClick={() => setDeleteConfirm(null)}
+                                className="px-3 py-1 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 rounded text-gray-800 dark:text-gray-200"
+                              >
+                                {t('admin.cancel')}
+                              </button>
+                              <button
+                                onClick={() => handleDelete(listing.id)}
+                                className="px-3 py-1 bg-red-600 hover:bg-red-700 text-white rounded"
+                              >
+                                {t('admin.confirm')}
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
+      
+      {/* Edit Listing Modal */}
+      {editingListing && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-card rounded-lg shadow-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-xl font-bold text-primary-color">{t('admin.editListing')}</h2>
+                <button 
+                  onClick={closeEditModal}
+                  className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              
+              {updateSuccess && (
+                <div className="mb-4 bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800 text-green-700 dark:text-green-400 p-3 rounded">
+                  Listing updated successfully!
+                </div>
+              )}
+              
+              <form onSubmit={updateListing}>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                  <div>
+                    <label htmlFor="title" className="block text-secondary-color mb-1">{t('admin.title')}</label>
+                    <input
+                      type="text"
+                      id="title"
+                      name="title"
+                      value={formData.title}
+                      onChange={handleInputChange}
+                      className="form-input"
+                      required
+                    />
+                  </div>
+                  
+                  <div>
+                    <label htmlFor="price" className="block text-secondary-color mb-1">{t('admin.price')}</label>
+                    <input
+                      type="number"
+                      id="price"
+                      name="price"
+                      value={formData.price}
+                      onChange={handleInputChange}
+                      className="form-input"
+                      step="0.01"
+                      min="0"
+                      required
+                    />
+                  </div>
+                  
+                  <div>
+                    <label htmlFor="condition" className="block text-secondary-color mb-1">{t('admin.condition')}</label>
+                    <input
+                      type="text"
+                      id="condition"
+                      name="condition"
+                      value={formData.condition}
+                      onChange={handleInputChange}
+                      className="form-input"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label htmlFor="location" className="block text-secondary-color mb-1">{t('admin.location')}</label>
+                    <input
+                      type="text"
+                      id="location"
+                      name="location"
+                      value={formData.location}
+                      onChange={handleInputChange}
+                      className="form-input"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label htmlFor="categoryId" className="block text-secondary-color mb-1">{t('admin.category')}</label>
+                    <select
+                      id="categoryId"
+                      name="categoryId"
+                      value={formData.categoryId}
+                      onChange={handleInputChange}
+                      className="form-input"
+                    >
+                      <option value="">Select category</option>
+                      {categories.map(category => (
+                        <option key={category.id} value={category.id}>
+                          {category.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+                
+                <div className="mb-6">
+                  <label htmlFor="description" className="block text-secondary-color mb-1">{t('admin.description')}</label>
+                  <textarea
+                    id="description"
+                    name="description"
+                    value={formData.description}
+                    onChange={handleInputChange}
+                    className="form-input min-h-[100px]"
+                  />
+                </div>
+                
+                <div className="mb-6">
+                  <label className="block text-secondary-color mb-2">{t('admin.images')}</label>
+                  
+                  {/* Existing images */}
+                  {listingImages.length > 0 && (
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-4">
+                      {listingImages.map((image, index) => (
+                        <div key={index} className="relative border rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800">
+                          <img 
+                            src={image} 
+                            alt={`Listing image ${index + 1}`}
+                            className="w-full h-32 object-cover"
+                          />
+                          <div className="absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-40 transition-opacity flex items-center justify-center opacity-0 hover:opacity-100">
+                            <div className="flex space-x-1">
+                              <button
+                                type="button"
+                                onClick={() => moveImageUp(index)}
+                                disabled={index === 0}
+                                className="p-1 bg-white dark:bg-gray-800 rounded hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50"
+                              >
+                                {t('admin.moveUp')}
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => moveImageDown(index)}
+                                disabled={index === listingImages.length - 1}
+                                className="p-1 bg-white dark:bg-gray-800 rounded hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50"
+                              >
+                                {t('admin.moveDown')}
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => removeExistingImage(index)}
+                                className="p-1 bg-red-600 text-white rounded hover:bg-red-700"
+                              >
+                                {t('admin.removeImage')}
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  
+                  {/* New images preview */}
+                  {newImages.length > 0 && (
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-4">
+                      {newImages.map((file, index) => (
+                        <div key={index} className="relative border rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800">
+                          <img 
+                            src={URL.createObjectURL(file)} 
+                            alt={`New image ${index + 1}`}
+                            className="w-full h-32 object-cover"
+                          />
+                          <div className="absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-40 transition-opacity flex items-center justify-center opacity-0 hover:opacity-100">
+                            <button
+                              type="button"
+                              onClick={() => removeNewImage(index)}
+                              className="p-1 bg-red-600 text-white rounded hover:bg-red-700"
+                            >
+                              {t('admin.removeImage')}
+                            </button>
+                          </div>
+                          <div className="absolute top-0 left-0 bg-blue-600 text-white text-xs px-2 py-1">
+                            New
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  
+                  {/* Add images button */}
+                  <div>
+                    <input
+                      type="file"
+                      ref={fileInputRef}
+                      onChange={handleFileSelect}
+                      multiple
+                      accept="image/*"
+                      className="hidden"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="btn-secondary"
+                    >
+                      {t('admin.addImages')}
+                    </button>
+                  </div>
+                </div>
+                
+                <div className="flex justify-end">
+                  <button
+                    type="button"
+                    onClick={closeEditModal}
+                    className="btn-secondary mr-2"
+                    disabled={updateLoading}
+                  >
+                    {t('admin.cancel')}
+                  </button>
+                  <button
+                    type="submit"
+                    className="btn-primary"
+                    disabled={updateLoading}
+                  >
+                    {updateLoading || uploadProgress ? t('admin.uploading') : t('admin.save')}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 } 

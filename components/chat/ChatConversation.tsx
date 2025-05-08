@@ -308,14 +308,14 @@ export default function ChatConversation({ chatId }: ChatConversationProps) {
                   <div 
                     className={`max-w-[80%] rounded-lg px-4 py-2 ${
                       isCurrentUser 
-                        ? 'bg-blue-600 dark:bg-blue-500 text-white rounded-br-none' 
-                        : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 dark:text-white rounded-bl-none'
+                        ? 'bg-blue-600 dark:bg-blue-600 text-white rounded-br-none' 
+                        : 'bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-gray-900 dark:text-white rounded-bl-none'
                     }`}
                   >
                     <p className="text-sm">{message.content}</p>
                     <div 
                       className={`text-xs mt-1 flex items-center ${
-                        isCurrentUser ? 'text-blue-100 justify-end' : 'text-gray-500 dark:text-gray-400'
+                        isCurrentUser ? 'text-blue-100 justify-end' : 'text-gray-500 dark:text-gray-300'
                       }`}
                     >
                       {formatTime(message.timestamp)}

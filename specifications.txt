@@ -1,0 +1,117 @@
+
+---
+
+## 1   Frame the problem and opportunity  
+
+| Signal | What it tells you |
+|--------|------------------|
+| Reddit threads complaining that “sve je scam” (“everything is a scam”) and that fake iPad ads dominate the site. citeturn2search1 | Real pain‑point: users have lost faith in listing quality. |
+| Njuškalo’s own help‑desk posts teaching users how to spot phishing links. citeturn2search4 | Even the incumbent admits the issue. |
+| EU Digital Services Act (DSA) now applies to **all** marketplaces since 17 Feb 2024, adding strict duties to remove illegal content and vet sellers. citeturn0search4 | Compliance is no longer optional: whoever solves safety best wins. |
+
+**Opportunity:** A “verified‑first, escrow‑by‑default” marketplace aimed at Croatian users who are tired of playing scam whack‑a‑mole.
+
+---
+
+## 2   Regulatory & compliance checklist (non‑negotiable)
+
+| Domain | Key rules you must meet from day 1 |
+|--------|------------------------------------|
+| **Digital Services Act** | • Designated point of contact for authorities and users  
+• Notice‑and‑action flow for illegal listings  
+• Transparent annual risk reports |
+| **GDPR** | Explicit consent for marketing mails/SMS; clear data‑retention schedule. citeturn0search1 |
+| **Croatian Consumer Protection Act (2022 update)** | Must show trader/consumer status on each listing and honor 14‑day withdrawal rights for traders. citeturn0search3 |
+| **Payment Services / AML (PSD2)** | If you hold money in escrow you’re a “payment institution” or need a licensed partner (e‑money or banking‑as‑a‑service). |
+
+*Takeaway:* Loop a local law firm in early; it‘s cheaper than retro‑fitting later.
+
+---
+
+## 3   Product pillars that differentiate you
+
+| Pillar | Concrete feature ideas |
+|--------|-----------------------|
+| **Real‑ID seller onboarding** | Bank‑level KYC via Croatia’s e‑Građani eID or video‑KYC SDK (Onfido, SumSub). Users see a “Verified” badge; unverified accounts can only browse. |
+| **Escrow & shipping in one flow** | Buyer pays into an in‑app wallet; funds release only when courier scan confirms delivery or buyer clicks “Everything OK”. |
+| **Fraud defense stack** | • ML model flags duplicate images/text and sudden price drops  
+• Velocity rules (max 3 high‑risk listings per hour)  
+• Human review queue integrated with Admin dashboard |
+| **Transparency & recourse** | • One‑tap “Report listing” that must be actioned within 48 h (DSA)  
+• Public dashboard of takedown stats builds trust. |
+| **User education** | Onboarding quiz: “Spot the scam” examples; you can’t post until you pass. |
+
+---
+
+## 4   MVP scope and architecture
+
+### 4.1 Functional cut‑off (90‑day goal)
+
+1. **Core flows**  
+   - Post listing (title, photos, price, category)  
+   - Search & filter + Chat (real‑time)  
+   - KYC + escrow checkout + shipping label print
+
+2. **Platforms**  
+   - **Web PWA** (Next.js 14)  
+   - **Mobile**: React Native wrapper or go full Swift/Kotlin later.
+
+3. **Backend**  
+   ```
+   API‑Gateway (NestJS)
+       ├─ Auth & KYC svc        (Postgres)
+       ├─ Listings svc          (Postgres + S3/GCS)
+       ├─ Search svc            (Elasticsearch/OpenSearch)
+       ├─ Chat & Notifications  (Redis + WebSocket)
+       └─ Payments svc          (Adyen / Stripe Treasury)
+   ```
+
+4. **Ops**  
+   - Docker‑ized micro‑services on Fly.io or Kubernetes (Hetzner)  
+   - CI/CD pipeline triggering Cypress e2e tests
+
+### 4.2 Delivery timeline (team of 4)
+
+| Week | Milestone |
+|------|-----------|
+| 1‑2 | User interviews, clickable Figma, legal gap‑analysis |
+| 3‑5 | Auth, KYC flow, Postgres schema, image upload |
+| 6‑7 | Search, listing page, chat MVP |
+| 8‑9 | Escrow checkout, courier API (Hrvatska Pošta + DPD) |
+| 10 | Fraud‑rules engine v1 + admin console |
+| 11 | Private beta with 100 users in Zagreb |
+| 12 | Hardening, DSA transparency page → public launch |
+
+---
+
+## 5   Operational playbook for trust & safety
+
+1. **Pre‑listing**  
+   - Real‑time image hashing against known scam hashes.  
+   - Auto‑price checker alerts seller if price is 40 % below market median.
+
+2. **Post‑listing monitoring**  
+   - NLP classifier scans messages for phishing links.  
+   - “Three‑strikes” system auto‑suspends repeat offenders.
+
+3. **Payments & disputes**  
+   - Dispute portal with 7‑day SLA; escrow partner can reverse funds.  
+   - Optional return shipping label auto‑generated.
+
+---
+
+## 6   Go‑to‑market & monetisation
+
+| Phase | Growth loop | Revenue |
+|-------|-------------|---------|
+| Beta (invite‑only) | University & tech‑meetup codes → create social proof | Free |
+| Public launch | Referral credits (both sides) | 5 % escrow fee + paid “Top Listing” |
+| Scale (year 2) | Partnership with Hrvatska Pošta pick‑up lockers; TV ads | Pro shop subscriptions + API for ERP bulk upload |
+
+---
+
+### Final thought
+
+Njuškalo’s network effect is strong, but **network trust** is brittle—exactly where you can out‑execute.  Ship a slim, legally solid MVP that **cannot** be used without real identity and escrow, learn from those first 100 sellers, and iterate.
+
+Let me know when you want to zoom in on any phase (e.g., KYC vendors or shipping APIs), and we’ll dig deeper.  Sretno s izgradnjom! 🛠️

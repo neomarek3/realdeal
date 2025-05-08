@@ -145,17 +145,17 @@ export default function ChatList() {
                     <h3 className="text-sm font-medium text-gray-900 dark:text-white truncate">
                       {chat.otherUserName}
                     </h3>
-                    <span className="text-xs text-gray-500 dark:text-gray-400">
+                    <span className="text-xs text-gray-500 dark:text-gray-300">
                       {formatTimeAgo(chat.lastMessageTime)}
                     </span>
                   </div>
                   
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 truncate">
+                  <p className="text-xs text-gray-500 dark:text-gray-300 mt-1 truncate">
                     Re: {chat.listingTitle}
                   </p>
                   
                   <div className="flex items-center justify-between mt-1">
-                    <p className="text-sm text-gray-600 dark:text-gray-300 truncate">
+                    <p className="text-sm text-gray-600 dark:text-gray-200 truncate">
                       {chat.lastMessage}
                     </p>
                     

@@ -23,7 +23,11 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${inter.variable} antialiased bg-gray-50 min-h-screen`}
+        className={`${inter.variable} antialiased min-h-screen`}
+        style={{
+          backgroundColor: 'var(--background)',
+          color: 'var(--foreground)'
+        }}
       >
         <Providers>
           <Navbar />

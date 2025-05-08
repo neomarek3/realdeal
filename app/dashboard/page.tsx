@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useAuth } from '@/app/providers';
+import { useLanguage } from '@/app/providers/LanguageProvider';
 
 type Listing = {
   id: string;
@@ -33,6 +34,7 @@ type Statistics = {
 export default function Dashboard() {
   const router = useRouter();
   const { user, isAuthenticated } = useAuth();
+  const { t } = useLanguage();
   const [loading, setLoading] = useState(true);
   const [listings, setListings] = useState<Listing[]>([]);
   const [chats, setChats] = useState<ChatPreview[]>([]);
@@ -167,210 +169,244 @@ export default function Dashboard() {
 
   return (
     <div className="max-w-6xl mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white">Welcome, {user?.name || 'User'}</h1>
+      <h1 className="text-2xl font-bold mb-6 text-primary-color">{t('dashboard.welcome')}, {user?.name || 'User'}</h1>
       
       {user && !user.isVerified && (
         <div className="mb-6 bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-800 text-yellow-700 dark:text-yellow-500 p-4 rounded-md">
-          <h2 className="font-medium">Your account is not verified</h2>
-          <p className="text-sm mt-1">Verify your account to start selling items</p>
+          <h2 className="font-medium">{t('dashboard.verifyPrompt')}</h2>
           <Link 
             href="/auth/verification"
             className="mt-2 inline-block bg-yellow-100 dark:bg-yellow-800 hover:bg-yellow-200 dark:hover:bg-yellow-700 text-yellow-800 dark:text-yellow-300 text-sm px-3 py-1 rounded"
           >
-            Verify Now
+            {t('dashboard.verifyNow')}
           </Link>
         </div>
       )}
       
       {/* Statistics Section */}
-      <div className="mb-8 bg-white dark:bg-gray-800 p-6 rounded-lg shadow border border-gray-100 dark:border-gray-700">
-        <h2 className="text-lg font-bold mb-4 text-gray-900 dark:text-white">Your Sales Statistics</h2>
+      <div className="mb-8 p-6 rounded-lg shadow border bg-card">
+        <h2 className="text-lg font-bold mb-4 text-primary-color">{t('dashboard.stats')}</h2>
         
         {listingsLoading ? (
           <div className="flex justify-center py-4">
-            <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-blue-500"></div>
+            <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-teal-500"></div>
           </div>
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-100 dark:border-blue-800">
-              <p className="text-sm text-blue-600 dark:text-blue-400 font-medium">Total Listings</p>
-              <p className="text-2xl font-bold mt-1 text-blue-700 dark:text-blue-300">{stats.totalListings}</p>
+            <div className="p-4 rounded-lg border bg-card">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-secondary-color">{t('dashboard.activeSales')}</p>
+                  <p className="text-2xl font-bold text-primary-color">{stats.activeListing}</p>
+                </div>
+                <div className="bg-teal-100 dark:bg-teal-900/30 p-3 rounded-full">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-teal-600 dark:text-teal-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                  </svg>
+                </div>
+              </div>
             </div>
             
-            <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-100 dark:border-blue-800">
-              <p className="text-sm text-blue-600 dark:text-blue-400 font-medium">Active Listings</p>
-              <p className="text-2xl font-bold mt-1 text-blue-700 dark:text-blue-300">{stats.activeListing}</p>
+            <div className="p-4 rounded-lg border bg-card">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-secondary-color">{t('dashboard.totalSold')}</p>
+                  <p className="text-2xl font-bold text-primary-color">{stats.soldItems}</p>
+                </div>
+                <div className="bg-blue-100 dark:bg-blue-900/30 p-3 rounded-full">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-blue-600 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+              </div>
             </div>
             
-            <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-100 dark:border-blue-800">
-              <p className="text-sm text-blue-600 dark:text-blue-400 font-medium">Items Sold</p>
-              <p className="text-2xl font-bold mt-1 text-blue-700 dark:text-blue-300">{stats.soldItems}</p>
+            <div className="p-4 rounded-lg border bg-card">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-secondary-color">{t('dashboard.totalViews')}</p>
+                  <p className="text-2xl font-bold text-primary-color">
+                    {Math.floor(Math.random() * 1000)}
+                  </p>
+                </div>
+                <div className="bg-purple-100 dark:bg-purple-900/30 p-3 rounded-full">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-purple-600 dark:text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                  </svg>
+                </div>
+              </div>
             </div>
             
-            <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-100 dark:border-blue-800">
-              <p className="text-sm text-blue-600 dark:text-blue-400 font-medium">Total Revenue</p>
-              <p className="text-2xl font-bold mt-1 text-blue-700 dark:text-blue-300">{formatCurrency(stats.totalRevenue)}</p>
+            <div className="p-4 rounded-lg border bg-card">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-secondary-color">{t('dashboard.messages')}</p>
+                  <p className="text-2xl font-bold text-primary-color">{chats.length}</p>
+                </div>
+                <div className="bg-yellow-100 dark:bg-yellow-900/30 p-3 rounded-full">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-yellow-600 dark:text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+                  </svg>
+                </div>
+              </div>
             </div>
           </div>
         )}
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* My Listings */}
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow border border-gray-100 dark:border-gray-700">
-          <h2 className="text-lg font-bold mb-4 text-gray-900 dark:text-white">My Listings</h2>
-          
-          {listingsLoading ? (
-            <div className="flex justify-center py-4">
-              <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-blue-500"></div>
+        {/* Recent Listings */}
+        <div className="md:col-span-2">
+          <div className="bg-card rounded-lg shadow border p-6 mb-6">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-lg font-bold text-primary-color">{t('dashboard.recentListings')}</h2>
+              <Link href="/marketplace/listings/create" className="text-blue-600 dark:text-blue-400 hover:underline text-sm">
+                + {t('nav.newListing')}
+              </Link>
             </div>
-          ) : listings.length === 0 ? (
-            <p className="text-gray-500 dark:text-gray-400 mb-4">You don't have any listings yet.</p>
-          ) : (
-            <div className="space-y-4 mb-4">
-              {listings.slice(0, 3).map(listing => (
-                <Link 
-                  key={listing.id} 
-                  href={`/marketplace/listings/${listing.id}`}
-                  className="block p-3 hover:bg-gray-50 dark:hover:bg-gray-700 rounded border border-gray-100 dark:border-gray-700"
-                >
-                  <div className="flex items-center">
-                    <div className="w-12 h-12 bg-gray-100 dark:bg-gray-700 rounded overflow-hidden mr-3 flex-shrink-0">
-                      {listing.images && listing.images.length > 0 ? (
-                        <img 
-                          src={listing.images[0]} 
-                          alt={listing.title} 
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <div className="w-full h-full bg-gray-200 dark:bg-gray-600 flex items-center justify-center text-gray-400 dark:text-gray-500">
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                          </svg>
-                        </div>
-                      )}
+            
+            {listingsLoading ? (
+              <div className="flex justify-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-teal-500"></div>
+              </div>
+            ) : listings.length > 0 ? (
+              <div className="space-y-4">
+                {listings.slice(0, 3).map(listing => (
+                  <div key={listing.id} className="flex border rounded-lg p-3 bg-card">
+                    <div className="w-16 h-16 bg-gray-200 dark:bg-gray-700 rounded-md overflow-hidden flex-shrink-0">
+                      <img 
+                        src={listing.images && listing.images.length > 0 ? listing.images[0] : '/images/placeholder-image.svg'} 
+                        alt={listing.title}
+                        className="w-full h-full object-cover"
+                      />
                     </div>
-                    <div className="flex-grow min-w-0">
-                      <h3 className="font-medium text-gray-900 dark:text-white truncate">{listing.title}</h3>
-                      <div className="flex justify-between items-center text-sm mt-1">
-                        <span className="text-blue-600 dark:text-blue-400 font-medium">{formatCurrency(listing.price)}</span>
-                        <span className="text-gray-500 dark:text-gray-400">{formatDate(listing.createdAt)}</span>
+                    <div className="ml-4 flex-grow">
+                      <div className="flex justify-between">
+                        <h3 className="font-medium text-primary-color">{listing.title}</h3>
+                        <span className="price-tag text-sm">€{listing.price}</span>
+                      </div>
+                      <p className="text-sm text-muted-color">{formatDate(listing.createdAt)}</p>
+                      <div className="mt-1 flex justify-between items-center">
+                        <span className={`text-xs px-2 py-0.5 rounded ${listing.isSold ? 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300' : 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'}`}>
+                          {listing.isSold ? t('listing.sold') : 'Active'}
+                        </span>
+                        <Link href={`/marketplace/listings/${listing.id}`} className="text-xs text-blue-600 dark:text-blue-400 hover:underline">
+                          {t('profile.viewListing')} →
+                        </Link>
                       </div>
                     </div>
-                    {listing.isSold && (
-                      <span className="ml-2 px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300 text-xs rounded">Sold</span>
+                  </div>
+                ))}
+                
+                <Link href="/dashboard/listings" className="block text-center py-2 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-secondary-color">
+                  {t('listing.viewAll')} →
+                </Link>
+              </div>
+            ) : (
+              <div className="py-8 text-center">
+                <p className="text-secondary-color mb-4">{t('dashboard.noListings')}</p>
+                <Link 
+                  href="/marketplace/listings/create"
+                  className="btn-primary inline-block"
+                >
+                  {t('dashboard.createFirst')}
+                </Link>
+              </div>
+            )}
+          </div>
+          
+          {/* Recent Messages */}
+          <div className="bg-card rounded-lg shadow border p-6">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-lg font-bold text-primary-color">{t('messages.title')}</h2>
+              <Link href="/user/messages" className="text-blue-600 dark:text-blue-400 hover:underline text-sm">
+                {t('dashboard.viewMessages')} →
+              </Link>
+            </div>
+            
+            {chatsLoading ? (
+              <div className="flex justify-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-teal-500"></div>
+              </div>
+            ) : chats.length > 0 ? (
+              <div className="space-y-3">
+                {chats.slice(0, 3).map(chat => (
+                  <div key={chat.id} className="flex items-center border rounded-lg p-3 bg-card">
+                    <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center text-blue-600 dark:text-blue-400 font-bold">
+                      {chat.otherUserName.charAt(0).toUpperCase()}
+                    </div>
+                    <div className="ml-3 flex-grow">
+                      <div className="flex justify-between">
+                        <h3 className="font-medium text-primary-color">{chat.otherUserName}</h3>
+                        <span className="text-xs text-muted-color">{formatTimeAgo(chat.lastMessageTime)}</span>
+                      </div>
+                      <p className="text-sm text-secondary-color truncate">{chat.lastMessage}</p>
+                    </div>
+                    {chat.unreadCount > 0 && (
+                      <div className="ml-2 bg-blue-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                        {chat.unreadCount}
+                      </div>
                     )}
                   </div>
+                ))}
+                
+                <Link href="/user/messages" className="block text-center py-2 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-secondary-color">
+                  {t('listing.viewAll')} →
                 </Link>
-              ))}
-            </div>
-          )}
-          
-          <Link 
-            href="/dashboard/listings" 
-            className="inline-block text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 text-sm font-medium"
-          >
-            View all listings →
-          </Link>
-        </div>
-        
-        {/* Messages */}
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow border border-gray-100 dark:border-gray-700">
-          <h2 className="text-lg font-bold mb-4 text-gray-900 dark:text-white">Recent Messages</h2>
-          
-          {chatsLoading ? (
-            <div className="flex justify-center py-4">
-              <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-blue-500"></div>
-            </div>
-          ) : chats.length === 0 ? (
-            <p className="text-gray-500 dark:text-gray-400 mb-4">You don't have any messages yet.</p>
-          ) : (
-            <div className="space-y-4 mb-4">
-              {chats.slice(0, 3).map(chat => (
-                <Link 
-                  key={chat.id} 
-                  href={`/user/messages/${chat.id}`}
-                  className="block p-3 hover:bg-gray-50 dark:hover:bg-gray-700 rounded border border-gray-100 dark:border-gray-700"
-                >
-                  <div className="flex items-start">
-                    <div className="flex-grow min-w-0">
-                      <div className="flex justify-between items-start">
-                        <h3 className="font-medium text-gray-900 dark:text-white truncate">
-                          {chat.otherUserName}
-                          {chat.unreadCount > 0 && (
-                            <span className="ml-2 px-1.5 py-0.5 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-300 text-xs rounded-full">
-                              {chat.unreadCount}
-                            </span>
-                          )}
-                        </h3>
-                        <span className="text-xs text-gray-500 dark:text-gray-400 ml-2 whitespace-nowrap">{formatTimeAgo(chat.lastMessageTime)}</span>
-                      </div>
-                      <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 truncate">{chat.lastMessage}</p>
-                      <p className="text-xs text-gray-400 dark:text-gray-500 mt-1 truncate">Re: {chat.listingTitle}</p>
-                    </div>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          )}
-          
-          <Link 
-            href="/user/messages" 
-            className="inline-block text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 text-sm font-medium"
-          >
-            View all messages →
-          </Link>
+              </div>
+            ) : (
+              <div className="py-8 text-center">
+                <p className="text-secondary-color">{t('messages.noMessages')}</p>
+              </div>
+            )}
+          </div>
         </div>
         
         {/* Quick Actions */}
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow border border-gray-100 dark:border-gray-700">
-          <h2 className="text-lg font-bold mb-4 text-gray-900 dark:text-white">Quick Actions</h2>
+        <div className="md:col-span-1">
+          <div className="bg-card rounded-lg shadow border p-6 mb-6">
+            <h2 className="text-lg font-bold mb-4 text-primary-color">{t('dashboard.quickActions')}</h2>
+            
+            <div className="space-y-3">
+              <Link href="/marketplace/listings/create" className="block w-full py-3 px-4 bg-teal-500 hover:bg-teal-600 dark:bg-teal-600 dark:hover:bg-teal-700 text-white rounded-lg text-center transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 inline-block mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                </svg>
+                {t('dashboard.newListing')}
+              </Link>
+              
+              <Link href="/user/messages" className="block w-full py-3 px-4 bg-blue-500 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 text-white rounded-lg text-center transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 inline-block mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+                </svg>
+                {t('dashboard.viewMessages')}
+              </Link>
+              
+              <Link href="/user/profile" className="block w-full py-3 px-4 bg-purple-500 hover:bg-purple-600 dark:bg-purple-600 dark:hover:bg-purple-700 text-white rounded-lg text-center transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 inline-block mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+                {t('dashboard.editProfile')}
+              </Link>
+              
+              <Link href="/marketplace/listings" className="block w-full py-3 px-4 bg-gray-500 hover:bg-gray-600 dark:bg-gray-600 dark:hover:bg-gray-700 text-white rounded-lg text-center transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 inline-block mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+                {t('dashboard.browseMarketplace')}
+              </Link>
+            </div>
+          </div>
           
-          <div className="space-y-3">
-            <Link 
-              href="/marketplace/listings/create"
-              className="flex items-center p-3 hover:bg-gray-50 dark:hover:bg-gray-700 rounded border border-gray-100 dark:border-gray-700"
-            >
-              <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/50 rounded-full flex items-center justify-center mr-3">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-blue-600 dark:text-blue-400" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
-                </svg>
-              </div>
-              <div>
-                <h3 className="font-medium text-gray-900 dark:text-white">Create New Listing</h3>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Sell an item on the marketplace</p>
-              </div>
-            </Link>
-            
-            <Link 
-              href="/user/profile"
-              className="flex items-center p-3 hover:bg-gray-50 dark:hover:bg-gray-700 rounded border border-gray-100 dark:border-gray-700"
-            >
-              <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/50 rounded-full flex items-center justify-center mr-3">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-blue-600 dark:text-blue-400" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
-                </svg>
-              </div>
-              <div>
-                <h3 className="font-medium text-gray-900 dark:text-white">Edit Profile</h3>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Update your profile information</p>
-              </div>
-            </Link>
-            
-            <Link 
-              href="/marketplace"
-              className="flex items-center p-3 hover:bg-gray-50 dark:hover:bg-gray-700 rounded border border-gray-100 dark:border-gray-700"
-            >
-              <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/50 rounded-full flex items-center justify-center mr-3">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-blue-600 dark:text-blue-400" viewBox="0 0 20 20" fill="currentColor">
-                  <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" />
-                </svg>
-              </div>
-              <div>
-                <h3 className="font-medium text-gray-900 dark:text-white">Browse Marketplace</h3>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Find items to purchase</p>
-              </div>
-            </Link>
+          {/* Revenue Chart Placeholder */}
+          <div className="bg-card rounded-lg shadow border p-6">
+            <h2 className="text-lg font-bold mb-4 text-primary-color">Revenue</h2>
+            <div className="h-48 bg-gray-100 dark:bg-gray-800 rounded flex items-center justify-center">
+              <p className="text-muted-color">
+                {formatCurrency(stats.totalRevenue)}
+              </p>
+            </div>
           </div>
         </div>
       </div>

@@ -4,9 +4,11 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useAuth } from '@/app/providers';
+import { useLanguage } from '@/app/providers/LanguageProvider';
 
 export default function Home() {
   const { isAuthenticated, user } = useAuth();
+  const { t } = useLanguage();
   const [featuredListings, setFeaturedListings] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -57,48 +59,50 @@ export default function Home() {
   return (
     <main className="min-h-screen">
       {/* Hero Section */}
-      <section className="bg-gradient-to-b from-blue-50 to-white dark:from-gray-900 dark:to-gray-800 py-16">
+      <section className="py-16 bg-card">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
-            <h1 className="text-4xl md:text-6xl font-bold mb-6 font-typewriter text-gray-900 dark:text-white">Welcome to RealDeal</h1>
-            <p className="text-xl md:text-2xl mb-8 max-w-3xl mx-auto font-typewriter text-gray-700 dark:text-gray-300">
-              A trusted marketplace for buying and selling goods, with authentication and real users.
+            <h1 className="text-4xl md:text-6xl font-bold mb-6 font-typewriter text-primary-color">
+              {t('home.welcome')}
+            </h1>
+            <p className="text-xl md:text-2xl mb-8 max-w-3xl mx-auto font-typewriter text-secondary-color">
+              {t('home.subtitle')}
             </p>
             <div className="flex flex-wrap gap-4 justify-center mb-8">
               {!isAuthenticated ? (
                 <>
                   <Link 
                     href="/auth/register" 
-                    className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-500 text-white px-6 py-3 rounded-lg text-lg font-typewriter transition-colors"
+                    className="px-6 py-3 rounded-lg text-lg font-typewriter transition-colors btn-primary"
                   >
-                    Sign Up
+                    {t('home.signup')}
                   </Link>
                   <Link 
                     href="/marketplace/listings" 
-                    className="bg-gray-800 hover:bg-gray-900 dark:bg-gray-700 dark:hover:bg-gray-600 text-white px-6 py-3 rounded-lg text-lg font-typewriter transition-colors"
+                    className="px-6 py-3 rounded-lg text-lg font-typewriter transition-colors btn-secondary"
                   >
-                    Browse Listings
+                    {t('home.browse')}
                   </Link>
                 </>
               ) : (
                 <div className="flex flex-wrap gap-4 justify-center">
                   <Link 
                     href="/dashboard" 
-                    className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-500 text-white px-6 py-3 rounded-lg text-lg font-typewriter transition-colors"
+                    className="px-6 py-3 rounded-lg text-lg font-typewriter transition-colors btn-primary"
                   >
-                    My Dashboard
+                    {t('home.dashboard')}
                   </Link>
                   <Link 
                     href="/marketplace/listings" 
-                    className="bg-gray-800 hover:bg-gray-900 dark:bg-gray-700 dark:hover:bg-gray-600 text-white px-6 py-3 rounded-lg text-lg font-typewriter transition-colors"
+                    className="px-6 py-3 rounded-lg text-lg font-typewriter transition-colors btn-secondary"
                   >
-                    Browse Listings
+                    {t('home.browse')}
                   </Link>
                   <Link 
                     href="/marketplace/listings/create" 
-                    className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-500 text-white px-6 py-3 rounded-lg text-lg font-typewriter transition-colors"
+                    className="px-6 py-3 rounded-lg text-lg font-typewriter transition-colors btn-primary"
                   >
-                    Create Listing
+                    {t('home.create')}
                   </Link>
                 </div>
               )}
@@ -108,11 +112,11 @@ export default function Home() {
       </section>
 
       {/* Featured Listings */}
-      <section className="py-16 bg-white dark:bg-gray-900">
+      <section className="py-16 bg-card">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold font-typewriter text-gray-900 dark:text-white">Featured Listings</h2>
-            <p className="text-gray-600 dark:text-gray-400 mt-2 font-typewriter">Check out some of our latest items for sale</p>
+            <h2 className="text-3xl font-bold font-typewriter text-primary-color">{t('home.featuredListings')}</h2>
+            <p className="text-secondary-color mt-2 font-typewriter">{t('home.featuredSubtitle')}</p>
           </div>
           
           {loading ? (
@@ -133,15 +137,15 @@ export default function Home() {
                       <span className="bg-blue-600 text-white text-xs px-2 py-1 rounded-md font-medium">{listing.category?.name || 'Item'}</span>
                     </div>
                   </div>
-                  <div className="p-4 flex-grow dark:bg-gray-800">
+                  <div className="p-4 flex-grow">
                     <div className="flex justify-between items-start mb-2">
-                      <h3 className="text-lg font-bold text-gray-900 dark:text-white font-typewriter">{listing.title}</h3>
-                      <span className="bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 px-2 py-0.5 rounded-md font-bold text-lg">€{listing.price}</span>
+                      <h3 className="text-lg font-bold text-primary-color font-typewriter">{listing.title}</h3>
+                      <span className="price-tag">€{listing.price}</span>
                     </div>
-                    <p className="text-gray-600 dark:text-gray-400 text-sm mb-2 line-clamp-2 font-typewriter">
-                      {listing.description || 'No description provided'}
+                    <p className="text-secondary-color text-sm mb-2 line-clamp-2 font-typewriter">
+                      {listing.description || t('listing.noDescription')}
                     </p>
-                    <div className="mt-auto pt-2 flex justify-between items-center text-sm text-gray-500 dark:text-gray-400 font-typewriter">
+                    <div className="mt-auto pt-2 flex justify-between items-center text-sm text-muted-color font-typewriter">
                       <span>{listing.location}</span>
                       <span>{new Date(listing.createdAt).toLocaleDateString()}</span>
                     </div>
@@ -151,113 +155,121 @@ export default function Home() {
             </div>
           ) : (
             <div className="text-center py-8">
-              <p className="text-gray-500 dark:text-gray-400 font-typewriter">No listings available at the moment.</p>
+              <p className="text-muted-color font-typewriter">{t('home.noListings')}</p>
             </div>
           )}
           
           <div className="text-center mt-8">
             <Link 
               href="/marketplace/listings" 
-              className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-500 text-white px-6 py-3 rounded-lg text-lg font-typewriter transition-colors inline-block"
+              className="btn-primary inline-block"
             >
-              View All Listings
+              {t('home.viewAll')}
             </Link>
           </div>
         </div>
       </section>
 
       {/* Categories Section */}
-      <section className="py-16 bg-gray-50 dark:bg-gray-800">
+      <section className="py-16 bg-card">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold font-typewriter text-gray-900 dark:text-white">Categories</h2>
-            <p className="text-gray-600 dark:text-gray-400 mt-2 font-typewriter">Browse items by category</p>
+            <h2 className="text-3xl font-bold font-typewriter text-primary-color">{t('home.categories')}</h2>
+            <p className="text-secondary-color mt-2 font-typewriter">{t('home.categoriesSubtitle')}</p>
           </div>
           
           {loading ? (
             <div className="flex justify-center">
               <div className="spinner h-16 w-16"></div>
             </div>
-          ) : categories.length > 0 ? (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          ) : (
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {categories.map((category) => (
                 <Link 
                   key={category.id} 
-                  href={`/marketplace/listings?category=${category.name}`} 
-                  className="bg-white dark:bg-gray-900 rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-all hover:-translate-y-1 border border-gray-100 dark:border-gray-700"
+                  href={`/marketplace/listings?category=${category.id}`} 
+                  className="group relative overflow-hidden rounded-lg shadow-md h-40 flex items-center justify-center bg-card"
                 >
-                  <div className="h-40 bg-blue-50 dark:bg-blue-900/20 relative">
-                    <div className="absolute inset-0 bg-gradient-to-t from-blue-900/70 to-transparent opacity-70"></div>
-                    <div className="absolute bottom-0 left-0 right-0 p-4">
-                      <h3 className="text-white text-lg font-bold font-typewriter">{category.name}</h3>
-                    </div>
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <span className="text-6xl font-bold text-blue-600/30 dark:text-blue-400/30 font-typewriter">
-                        {category.name.charAt(0)}
-                      </span>
-                    </div>
-                  </div>
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent z-10"></div>
+                  <img 
+                    src={getCategoryImage(category.name)} 
+                    alt={category.name} 
+                    className="absolute inset-0 h-full w-full object-cover group-hover:scale-105 transition-transform duration-300"
+                  />
+                  <h3 className="text-white text-xl font-bold z-20 font-typewriter">{category.name}</h3>
                 </Link>
               ))}
-            </div>
-          ) : (
-            <div className="text-center py-8">
-              <p className="text-gray-500 dark:text-gray-400 font-typewriter">No categories available.</p>
             </div>
           )}
         </div>
       </section>
 
       {/* How It Works Section */}
-      <section className="py-16 bg-white dark:bg-gray-900">
+      <section className="py-16 bg-card">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold font-typewriter text-gray-900 dark:text-white">How It Works</h2>
-            <p className="text-gray-600 dark:text-gray-400 mt-2 font-typewriter">Simple steps to buy and sell items</p>
+            <h2 className="text-3xl font-bold font-typewriter text-primary-color">{t('home.howItWorks')}</h2>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="text-center">
-              <div className="bg-blue-100 dark:bg-blue-900/30 rounded-full h-20 w-20 flex items-center justify-center mx-auto mb-4">
-                <span className="text-blue-600 dark:text-blue-400 text-2xl font-bold">1</span>
+            <div className="text-center p-6 rounded-lg bg-card">
+              <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span className="text-2xl font-bold text-blue-600 dark:text-blue-400">1</span>
               </div>
-              <h3 className="text-xl font-bold mb-2 font-typewriter text-gray-900 dark:text-white">Create an Account</h3>
-              <p className="text-gray-600 dark:text-gray-400 font-typewriter">Sign up and complete your profile to start using RealDeal marketplace.</p>
+              <h3 className="text-xl font-bold mb-2 text-primary-color">{t('home.step1')}</h3>
+              <p className="text-secondary-color">Sign up with your email and create a secure password</p>
             </div>
             
-            <div className="text-center">
-              <div className="bg-blue-100 dark:bg-blue-900/30 rounded-full h-20 w-20 flex items-center justify-center mx-auto mb-4">
-                <span className="text-blue-600 dark:text-blue-400 text-2xl font-bold">2</span>
+            <div className="text-center p-6 rounded-lg bg-card">
+              <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span className="text-2xl font-bold text-blue-600 dark:text-blue-400">2</span>
               </div>
-              <h3 className="text-xl font-bold mb-2 font-typewriter text-gray-900 dark:text-white">Buy or Sell</h3>
-              <p className="text-gray-600 dark:text-gray-400 font-typewriter">Browse listings or create your own to sell items you no longer need.</p>
+              <h3 className="text-xl font-bold mb-2 text-primary-color">{t('home.step2')}</h3>
+              <p className="text-secondary-color">Complete our verification process to confirm your identity</p>
             </div>
             
-            <div className="text-center">
-              <div className="bg-blue-100 dark:bg-blue-900/30 rounded-full h-20 w-20 flex items-center justify-center mx-auto mb-4">
-                <span className="text-blue-600 dark:text-blue-400 text-2xl font-bold">3</span>
+            <div className="text-center p-6 rounded-lg bg-card">
+              <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span className="text-2xl font-bold text-blue-600 dark:text-blue-400">3</span>
               </div>
-              <h3 className="text-xl font-bold mb-2 font-typewriter text-gray-900 dark:text-white">Connect & Complete</h3>
-              <p className="text-gray-600 dark:text-gray-400 font-typewriter">Message sellers, arrange meetups, and complete your transactions safely.</p>
+              <h3 className="text-xl font-bold mb-2 text-primary-color">{t('home.step3')}</h3>
+              <p className="text-secondary-color">Browse listings or create your own to start selling</p>
             </div>
           </div>
+        </div>
+      </section>
+
+      {/* Why Choose Us Section */}
+      <section className="py-16 bg-card">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold font-typewriter text-primary-color">{t('home.whyChoose')}</h2>
+          </div>
           
-          <div className="text-center mt-12">
-            {!isAuthenticated ? (
-              <Link 
-                href="/auth/register" 
-                className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-500 text-white px-6 py-3 rounded-lg text-lg font-typewriter transition-colors inline-block"
-              >
-                Get Started
-              </Link>
-            ) : (
-              <Link 
-                href="/marketplace/listings/create" 
-                className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-500 text-white px-6 py-3 rounded-lg text-lg font-typewriter transition-colors inline-block"
-              >
-                Create a Listing
-              </Link>
-            )}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="p-6 rounded-lg bg-card">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 mb-4 text-blue-600 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+              </svg>
+              <h3 className="text-xl font-bold mb-2 text-primary-color">{t('home.reason1')}</h3>
+              <p className="text-secondary-color">All users are verified with ID checks to prevent fraud</p>
+            </div>
+            
+            <div className="p-6 rounded-lg bg-card">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 mb-4 text-blue-600 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2z" />
+              </svg>
+              <h3 className="text-xl font-bold mb-2 text-primary-color">{t('home.reason2')}</h3>
+              <p className="text-secondary-color">Our escrow service protects both buyers and sellers</p>
+            </div>
+            
+            <div className="p-6 rounded-lg bg-card">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 mb-4 text-blue-600 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+              <h3 className="text-xl font-bold mb-2 text-primary-color">{t('home.reason3')}</h3>
+              <p className="text-secondary-color">Our AI detection system flags suspicious listings automatically</p>
+            </div>
           </div>
         </div>
       </section>
