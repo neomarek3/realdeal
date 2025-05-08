@@ -60,7 +60,8 @@ export default function CreateListingPage() {
     categoryId: '',
     condition: 'Like New',
     location: '',
-    images: [] as File[]
+    images: [] as File[],
+    isActive: true
   });
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -133,6 +134,12 @@ export default function CreateListingPage() {
       ...prev,
       images: prev.images.filter((_, i) => i !== index)
     }));
+  };
+
+  const addImage = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -386,13 +393,13 @@ export default function CreateListingPage() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
               {formData.images.map((image, index) => (
                 <div key={index} className="relative bg-gray-100 dark:bg-gray-700 p-2 rounded-lg">
-                  <input
-                    type="text"
-                    value={image}
-                    onChange={(e) => handleImageChange(index, e.target.value)}
-                    placeholder="Image URL"
-                    className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md dark:bg-gray-700 dark:text-white"
-                  />
+                  <div className="w-full h-24 mb-2 overflow-hidden rounded">
+                    <img 
+                      src={URL.createObjectURL(image)} 
+                      alt={`Preview ${index}`}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
                   <button
                     type="button"
                     onClick={() => removeImage(index)}
@@ -415,6 +422,14 @@ export default function CreateListingPage() {
             <p className="text-xs text-gray-500 dark:text-gray-400">
               You can add up to 5 image URLs. For a real app, this would be an image upload feature.
             </p>
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleImageChange}
+              className="hidden"
+              accept="image/*"
+              multiple
+            />
           </div>
 
           <div className="flex items-center">
